@@ -1,0 +1,5 @@
+database:
+  url: "sqlite:///../clockin.dev.db3"
+plan:
+  threads: 10 # 任务的最大线程数
+  interval: 60 # 任务检查间隔
