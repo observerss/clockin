@@ -1,11 +1,14 @@
 from invoke import task
+
 from models import Base, engine
-from handlers.db import (
+
+from handlers.tasks import (
     update_user as update_user_db,
     add_plan as add_plan_db,
     del_plan as del_plan_db,
     list_plans as list_plans_db,
 )
+from handlers.plan import start_scheduler
 
 
 @task
@@ -23,7 +26,7 @@ def add_user(c, cookie=""):
     """
     from hamicli import HamiCli
 
-    cli = HamiCli(cookie=cookie)
+    cli = HamiCli(cookie=cookie, fetch=True)
 
     # 上一步初始化的东西都拿到了, 直接关闭cli即可
     cli.close()
@@ -67,4 +70,16 @@ def add_plan(c, username="", robotname="", scriptname=""):
 
 @task
 def del_plan(c, id=0):
+    """
+    删除定时任务
+    """
     return del_plan_db(id)
+
+
+@task
+def run_plans(c):
+    """
+    执行定时任务
+    """
+    thread = start_scheduler()
+    thread.join()

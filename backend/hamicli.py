@@ -11,7 +11,6 @@ import functools
 import re
 import time
 from typing import List
-import engineio
 
 import pyjson5
 import socketio
@@ -19,6 +18,7 @@ import requests
 
 from schemas import UserInfo, RobotInfo, ScriptInfo, InstallationInfo
 from logger import logger
+from utils import logs_error
 
 
 URL_ROBOTS = "https://hamibot.com/dashboard/robots"
@@ -37,19 +37,14 @@ def get_user_info(cookie: str) -> UserInfo:
     return UserInfo(**info["state"]["auth"]["user"])
 
 
-def logs_error(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            logger.exception(str(e))
-
-    return wrapper
-
-
 class HamiCli:
-    def __init__(self, cookie: str | None = None, user_info: UserInfo | None = None):
+    def __init__(
+        self,
+        cookie: str | None = None,
+        user_info: UserInfo | None = None,
+        fetch: bool = True,
+        timeout: float = 5,
+    ):
         if not cookie and not user_info:
             raise RuntimeError("should provide either `cookie` or `user_info`")
 
@@ -64,13 +59,13 @@ class HamiCli:
         self.sio = socketio.Client(reconnection=False, engineio_logger=True)
 
         try:
-            self.connect(user_info)
+            self.connect(user_info=user_info, fetch=fetch, timeout=timeout)
         except Exception as e:
             if self.sio.connected:
                 self.sio.disconnect()
             raise e
 
-    def connect(self, user_info: UserInfo, timeout: float = 5):
+    def connect(self, user_info: UserInfo, timeout: float = 5, fetch: bool = True):
         """
         连接WebSocket
 
@@ -81,10 +76,13 @@ class HamiCli:
 
         script_page = 1
         installation_page = 1
-        successes = [False, False, False]
         ROBOT_LIST = 0
         SCRIPT_LIST = 1
         INSTALLATION_LIST = 2
+        if fetch:
+            successes = [False, False, False]
+        else:
+            successes = [False]
 
         @sio.on("connect_error")
         def connect_error(msg):
@@ -99,13 +97,19 @@ class HamiCli:
         def join_success(msg):
             logger.info(f"{user_info.username} joined: {msg}")
 
-            # 查看自有脚本列表
-            sio.emit("b:script:list", {"page": script_page})
+            if fetch:
+                # 查看自有脚本列表
+                sio.emit("b:script:list", {"page": script_page})
 
-            # 查看已安装脚本列表
-            sio.emit(
-                "b:installation:list", {"page": installation_page, "hasRecently": 0}
-            )
+                # 查看已安装脚本列表
+                sio.emit(
+                    "b:installation:list", {"page": installation_page, "hasRecently": 0}
+                )
+
+        @sio.on("join:conflict")
+        def join_conflict(msg):
+            sio.disconnect()
+            logger.info(f"{user_info.username} joined elsewhere: {msg}")
 
         def join_failed(msg):
             sio.disconnect()

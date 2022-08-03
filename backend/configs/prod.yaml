@@ -1,5 +1,5 @@
 database:
-  url: "sqlite:///../clockin.prod.db3"
+  url: "sqlite:///../db/clockin.prod.db3"
 plan:
   threads: 10
   interval: 60

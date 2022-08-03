@@ -1,11 +1,10 @@
 from datetime import datetime
 import enum
 from colorama import Fore
-from sqlalchemy import Float, PrimaryKeyConstraint, alias, create_engine
+from sqlalchemy import Float, inspect, alias, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import (
-    Index,
     Boolean,
     Column,
     ForeignKey,
@@ -17,8 +16,7 @@ from sqlalchemy import (
     Date,
     Enum,
 )
-from sqlalchemy.orm import relationship
-from traitlets import default
+from sqlalchemy.orm import relationship, deferred
 
 from config import get_config
 
@@ -91,12 +89,11 @@ class Script(Base):
     use_message = Column(Boolean)
     updated_at = Column(DateTime)
     listing_slug = Column(String)
-    configuration = Column(JSON)
-    files = Column(JSON)
+    configuration = deferred(Column(JSON))
+    files = deferred(Column(JSON))
 
     user = relationship("User", back_populates="scripts")
     plans = relationship("Plan", back_populates="script")
-    records = relationship("Record", back_populates="script")
 
 
 class Installation(Base):
@@ -118,7 +115,6 @@ class Installation(Base):
 
     user = relationship("User", back_populates="installations")
     plans = relationship("Plan", back_populates="installation")
-    records = relationship("Record", back_populates="installation")
 
 
 class Plan(Base):
@@ -131,6 +127,9 @@ class Plan(Base):
     script_id = Column(String, ForeignKey("scripts.id"))
     installation_id = Column(String, ForeignKey("installations.id"))
     deleted = Column(Boolean, index=True, default=False)
+    ranges = Column(
+        JSON, default={"clockin_range": "8:00-11:00", "clockout_range": "19:00-24:00"}
+    )
 
     user = relationship("User", back_populates="plans")
     robot = relationship("Robot", back_populates="plans")
@@ -145,8 +144,7 @@ class Record(Base):
 
     user_id = Column(String, ForeignKey("users.id"))
     robot_id = Column(String, ForeignKey("robots.id"))
-    script_id = Column(String, ForeignKey("scripts.id"))
-    installation_id = Column(String, ForeignKey("installations.id"))
+    script_id = Column(String)
 
     app_env = Column(String)
     timestamp = Column(DateTime)
@@ -154,8 +152,6 @@ class Record(Base):
 
     user = relationship("User", back_populates="records")
     robot = relationship("Robot", back_populates="records")
-    script = relationship("Script", back_populates="records")
-    installation = relationship("Installation", back_populates="records")
 
 
 class Clock(Base):
@@ -170,3 +166,7 @@ class Clock(Base):
     clockout = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="clocks")
+
+
+def object_as_dict(obj):
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}

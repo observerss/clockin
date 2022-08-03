@@ -14,13 +14,13 @@ class DoneClockRequest(BaseModel):
     user_id: str
     robot_id: str
     script_id: str
-    timestamp: str  # "2021-02-03 04:05:06"
-    direction: str  # "in" / "out"
+    timestamp: datetime  # "2021-02-03 04:05:06"
+    extra: object
 
 
 class UserInfo(BaseModel):
     class Config:
-        pass
+        allow_population_by_field_name = True
 
     token: str
     user_id: str = Field(alias="userId")
@@ -42,7 +42,7 @@ class RobotInfo(BaseModel):
     version: str = ""
     brand: str = ""
     model: str = ""
-    app_version_code: int = 0
+    app_version_code: int = Field(alias="appVersionCode", default=0)
     name: str = ""
 
 

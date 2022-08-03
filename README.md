@@ -50,4 +50,34 @@ inv add-plan -u observerss -r Bot01 -s 飞书打卡
 ### 删除计划
 
 
+## 打包和部署
 
+### 做镜像、打包、加载
+
+```bash
+docker build -t clockin .
+docker save clockin -o clockin.tar
+
+gzip clockin.tar
+scp clockin.tar.gz HOST:/data/clockin/
+ssh HOST:PATH
+
+cd /data/clockin
+docker load -i clockin.tar
+```
+
+### 初始化数据库
+
+```bash
+mkdir db logs
+alias clockinv="docker run -it --rm -v `pwd`/db:/app/db clockin inv"
+clockinv init-db
+clockinv add-user --cookie="auth.strategy=local; auth._token.local=Bearer%20eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvYmplY3QiOiJ1c2VyIiwidXNlcklkIjoiNjJiZTdhZjVmNjA5NjUyNGY5OWIwMjM4Iiwicm9sZSI6InVzZXIiLCJwbGFuIjoiZnJlZSIsImlhdCI6MTY1NjY1MDQ4NiwiZXhwIjoxNjY1MjkwNDg2fQ.gSH8-DwLy-QdjV1tnn_E7PoMANLFz_NShGTB9FA9gSY; auth._token_expiration.local=1665290486000"
+clockinv add-plan -u observerss -r Bot01 -s 飞书打卡
+```
+
+### 运行服务端
+
+```bash
+docker run -dit --name=clockin --restart=always -v `pwd`/db:/app/db -v `pwd`/logs:/app/logs -p 11811:8000 clockin
+```

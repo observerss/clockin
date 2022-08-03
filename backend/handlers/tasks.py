@@ -1,4 +1,3 @@
-from this import d
 from typing import Iterable, List
 
 from sqlalchemy import select, update
@@ -181,7 +180,6 @@ def update_installations(session: Session, installations: List[InstallationInfo]
                 break
     for ii in installations:
         if ii.id not in updated_ids:
-            idict = ii.dict()
             session.add(Installation(**ii.dict()))
 
 
