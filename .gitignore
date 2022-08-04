@@ -3,3 +3,5 @@ __pycache__/*
 .vscode/*
 logs/*.log
 *.db3
+*.tar
+*.tar.gz

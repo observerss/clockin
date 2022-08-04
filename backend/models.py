@@ -1,7 +1,5 @@
-from datetime import datetime
 import enum
-from colorama import Fore
-from sqlalchemy import Float, inspect, alias, create_engine
+from sqlalchemy import inspect, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import (
@@ -128,7 +126,7 @@ class Plan(Base):
     installation_id = Column(String, ForeignKey("installations.id"))
     deleted = Column(Boolean, index=True, default=False)
     ranges = Column(
-        JSON, default={"clockin_range": "8:00-11:00", "clockout_range": "19:00-24:00"}
+        JSON, default={"clockin_range": "08:00-11:00", "clockout_range": "19:00-24:00"}
     )
 
     user = relationship("User", back_populates="plans")

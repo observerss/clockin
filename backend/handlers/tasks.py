@@ -41,7 +41,7 @@ def add_plan(username: str, robotname: str, scriptname: str):
     user: User
     with Session() as session:
         statement1 = (
-            select(User.id, Robot.id, Script.id)
+            select(User.id, Robot.id, Script.id, Script.configuration)
             .join(User.robots)
             .join(User.scripts)
             .where(User.username == username)
@@ -49,7 +49,7 @@ def add_plan(username: str, robotname: str, scriptname: str):
             .where(Script.name == scriptname)
         )
         statement2 = (
-            select(User.id, Robot.id, Installation.id)
+            select(User.id, Robot.id, Installation.id, Installation.configuration)
             .join(User.robots)
             .join(User.installations)
             .where(User.username == username)
@@ -62,27 +62,35 @@ def add_plan(username: str, robotname: str, scriptname: str):
         logger.debug(
             f"statement2: {statement1.compile(engine, compile_kwargs={'literal_binds': True})}"
         )
-        ids1 = session.execute(statement1).one_or_none()
-        ids2 = session.execute(statement2).one_or_none()
-        print(ids1, ids2)
 
-        if ids1:
+        values1 = session.execute(statement1).one_or_none()
+        values2 = session.execute(statement2).one_or_none()
+        logger.info(f"script values: {values1}")
+        logger.info(f"installation values: {values2}")
+
+        if values1:
             plan = Plan(
-                user_id=ids1[0],
-                robot_id=ids1[1],
-                script_id=ids1[2],
+                user_id=values1[0],
+                robot_id=values1[1],
+                script_id=values1[2],
                 type=PlanType.script,
             )
-        elif ids2:
+            ranges = get_ranges_from_configuration(values1[3])
+        elif values2:
             plan = Plan(
-                user_id=ids2[0],
-                robot_id=ids2[1],
-                installation_id=ids2[2],
+                user_id=values2[0],
+                robot_id=values2[1],
+                installation_id=values2[2],
                 type=PlanType.installation,
             )
+            ranges = get_ranges_from_configuration(values2[3])
         else:
             logger.error(f"selection not found: {username}/{robotname}/{scriptname}")
             return
+
+        if ranges:
+            plan.ranges = ranges
+
         session.add(plan)
         session.commit()
 
@@ -186,3 +194,16 @@ def update_installations(session: Session, installations: List[InstallationInfo]
 def iter_ids(iterable: Iterable):
     for item in iterable:
         yield item.id
+
+
+def get_ranges_from_configuration(configuration: dict):
+    def get_config(key: str):
+        return configuration.get("values", {}).get(key) or configuration.get(
+            "defaultValues", {}
+        ).get(key)
+
+    clockin_range = get_config("clockInRange")
+    clockout_range = get_config("clockOutRange")
+    ranges = dict(clockin_range=clockin_range, clockout_range=clockout_range)
+    logger.info(f"ranges = {ranges}")
+    return ranges

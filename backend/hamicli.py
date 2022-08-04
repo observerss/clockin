@@ -7,7 +7,6 @@ A Websocket Client to Hamibot Console
 
 1. 先访问 https://hamibot.com/dashboard/robots 拿到基本信息
 """
-import functools
 import re
 import time
 from typing import List
@@ -29,12 +28,15 @@ def get_user_info(cookie: str) -> UserInfo:
     """获取用户信息"""
     resp = requests.get(URL_ROBOTS, headers={"Cookie": cookie})
     m = re.compile(r"return ({.*})\((null.*)\)\)").search(resp.text)
-    res = m.group(1)
-    for i, val in enumerate(m.group(2).split(",")):
-        res = res.replace(f':{chr(ord("a") + i)},', ":" + val + ",")
-        res = res.replace(f':{chr(ord("a") + i)}}}', ":" + val + "}")
-    info = pyjson5.decode(res[:-1])
-    return UserInfo(**info["state"]["auth"]["user"])
+    if not m:
+        raise RuntimeError(f"cannot parse user info from url: {URL_ROBOTS}")
+    else:
+        res = m.group(1)
+        for i, val in enumerate(m.group(2).split(",")):
+            res = res.replace(f':{chr(ord("a") + i)},', ":" + val + ",")
+            res = res.replace(f':{chr(ord("a") + i)}}}', ":" + val + "}")
+        info = pyjson5.decode(res[:-1])
+        return UserInfo(**info["state"]["auth"]["user"])
 
 
 class HamiCli:
@@ -48,8 +50,11 @@ class HamiCli:
         if not cookie and not user_info:
             raise RuntimeError("should provide either `cookie` or `user_info`")
 
-        if not user_info:
+        if not user_info and cookie:
             user_info = get_user_info(cookie)
+
+        if not user_info:
+            raise RuntimeError("user info not fetched")
 
         self.user = user_info
         self.robots: List[RobotInfo] = []

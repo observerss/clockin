@@ -51,9 +51,6 @@ class Job:
 
 
 class JobManager:
-    clockin_range = (8, 18)
-    clockout_range = (19, 24)
-
     def __init__(self):
         self.plans: List[Plan] = []
         self.clocked_dict: Dict[str, Clock] = {}  # user_id => Clock
@@ -100,7 +97,10 @@ class JobManager:
         _ = plan.installation
 
     def parse_range(self, ran: str):
-        return ran.split("-")
+        vals = ran.split("-")
+        v1, v2 = vals[0].split(":")
+        v3, v4 = vals[1].split(":")
+        return f"{v1:>02.2s}:{v2:>02.2s}", f"{v3:>02.2s}:{v4:>02.2s}"
 
     def get_jobs(self) -> Iterable[Job]:
         """
@@ -111,6 +111,9 @@ class JobManager:
             for plan in self.plans:
                 clock = self.clocked_dict.get(plan.user_id)
                 if clock:
+                    logger.debug(f"plan: {object_as_dict(plan)}")
+                    logger.debug(f"clock: {object_as_dict(clock)}")
+
                     now = datetime.now()
 
                     before_in, after_in = self.parse_range(
@@ -118,6 +121,13 @@ class JobManager:
                     )
                     before_out, after_out = self.parse_range(
                         (plan.ranges or {}).get("clockout_range", "19:00-24:00")
+                    )
+
+                    logger.debug(
+                        f"conds_in: {before_in}, {now.strftime('%H:%M')}, {after_in}"
+                    )
+                    logger.debug(
+                        f"conds_out: {before_out}, {now.strftime('%H:%M')}, {after_out}"
                     )
 
                     if (

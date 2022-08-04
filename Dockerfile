@@ -13,6 +13,7 @@ RUN mkdir -p /app/logs /app/db
 COPY backend /app/backend
 
 ENV ENV="production"
+ENV TZ="Asia/Shanghai"
 
 WORKDIR /app/backend
 

@@ -52,7 +52,7 @@ class ScriptInfo(BaseModel):
     name: str
     obfuscate: bool = False
     use_message: bool = Field(alias="useMessage", default=False)
-    updated_at: datetime = Field(alias="updatedAt", default_factory=datetime)
+    updated_at: datetime = Field(alias="updatedAt", default_factory=datetime.now)
     listing_slug: str = Field(alias="listingSlug", default="")
     configuration: dict = {}
     files: list = []
