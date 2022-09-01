@@ -1,13 +1,39 @@
 from datetime import date
 
 from sqlalchemy import select
+from invoke.context import Context
 
-from schemas import DoneClockRequest
-from models import Session, Record, Clock, Script, Installation
-from utils import logs_error
+from schemas import DoneClockRequest, AddUserRequest, AddPlanRequest
+from models import Session, Record, Clock
+from handlers.tasks import add_plan, update_user
 
 
-@logs_error
+def handle_add_plan(req: AddPlanRequest):
+    add_plan(
+        username=req.username,
+        robotname=req.robotname,
+        scriptname=req.scriptname,
+        userid=req.userid,
+    )
+
+
+def handle_add_user(req: AddUserRequest):
+    from hamicli import HamiCli
+
+    cli = HamiCli(cookie=req.cookie, fetch=True)
+
+    # 上一步初始化的东西都拿到了, 直接关闭cli即可
+    cli.close()
+
+    update_user(
+        cookie=req.cookie,
+        user_info=cli.user,
+        robots=cli.robots,
+        scripts=cli.scripts,
+        installations=cli.installations,
+    )
+
+
 def handle_done_clock(req: DoneClockRequest):
     with Session() as session:
         record = Record(

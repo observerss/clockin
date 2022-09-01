@@ -57,7 +57,7 @@ def list_plans(c):
 
 
 @task
-def add_plan(c, username="", robotname="", scriptname=""):
+def add_plan(c, username="", robotname="", scriptname="", userid=""):
     """
     添加用户定时任务
 
@@ -65,7 +65,9 @@ def add_plan(c, username="", robotname="", scriptname=""):
     :param robotname: 机器人名称
     :param scriptname: 脚本名称
     """
-    return add_plan_db(username=username, robotname=robotname, scriptname=scriptname)
+    return add_plan_db(
+        username=username, robotname=robotname, scriptname=scriptname, userid=userid
+    )
 
 
 @task

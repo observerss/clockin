@@ -22,7 +22,7 @@ cd backend
 inv  --list
 ```
 
-~~~~
+```
 Available tasks:
 
   add-plan      添加用户定时任务
@@ -30,16 +30,13 @@ Available tasks:
   add-user      添加用户(By Cookie), 并以此更新用户的连接信息
   list-plans    列表所有的定时任务
   update-user   更新用户Cookie, 并以此更新用户的连接信息
-~~~~
-
+```
 
 ### 添加/更新用户
-
 
 ```bash
 inv add-user --cookie="auth.strategy=local; auth._token.local=Bearer%20eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvYmplY3QiOiJ1c2VyIiwidXNlcklkIjoiNjJiZTdhZjVmNjA5NjUyNGY5OWIwMjM4Iiwicm9sZSI6InVzZXIiLCJwbGFuIjoiZnJlZSIsImlhdCI6MTY1NjY1MDQ4NiwiZXhwIjoxNjY1MjkwNDg2fQ.gSH8-DwLy-QdjV1tnn_E7PoMANLFz_NShGTB9FA9gSY; auth._token_expiration.local=1665290486000"
 ```
-
 
 ### 添加计划
 
@@ -48,7 +45,6 @@ inv add-plan -u observerss -r Bot01 -s 飞书打卡
 ```
 
 ### 删除计划
-
 
 ## 打包和部署
 
@@ -79,5 +75,5 @@ clockinv add-plan -u observerss -r Bot01 -s 飞书打卡
 ### 运行服务端
 
 ```bash
-docker run -dit --name=clockin --restart=always -v `pwd`/db:/app/db -v `pwd`/logs:/app/logs -p 11811:8000 clockin
+docker run -dit --name=clockin --restart=always -v `pwd`/db:/app/db -v `pwd`/logs:/app/logs -p 11811:8000 -p 11812:8001 clockin
 ```

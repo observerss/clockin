@@ -12,14 +12,14 @@ from config import get_config
 from schemas import UserInfo
 from models import Plan, Clock, Session, PlanType, object_as_dict
 from hamicli import HamiCli
-from utils import logs_error
+from utils import handles_error
 
 
 class Job:
     def __init__(self, plan: Plan):
         self.plan = plan
 
-    @logs_error
+    @handles_error
     def run(self):
         plan = self.plan
 

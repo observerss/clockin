@@ -3,6 +3,27 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class AddPlanRequest(BaseModel):
+    """
+    AddPlan请求体
+    """
+
+    username: str = ""
+    robotname: str = ""
+    scriptname: str = ""
+    userid: str = ""
+
+
+class AddUserRequest(BaseModel):
+    """
+    AddUser请求体
+
+    也可以用来更新User信息
+    """
+
+    cookie: str
+
+
 class DoneClockRequest(BaseModel):
     """
     DoneClock请求体

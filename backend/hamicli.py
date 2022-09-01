@@ -17,7 +17,7 @@ import requests
 
 from schemas import UserInfo, RobotInfo, ScriptInfo, InstallationInfo
 from logger import logger
-from utils import logs_error
+from utils import handles_error
 
 
 URL_ROBOTS = "https://hamibot.com/dashboard/robots"
@@ -124,7 +124,7 @@ class HamiCli:
         sio.on("join_failed", join_failed)
 
         @sio.on("robot:list")
-        @logs_error
+        @handles_error
         def robot_list(msg):
             """
             收到robot:list消息
@@ -157,7 +157,7 @@ class HamiCli:
             successes[ROBOT_LIST] = True
 
         @sio.on("script:list:success")
-        @logs_error
+        @handles_error
         def script_list(msg):
             """
             b:script:list的回复消息
@@ -194,7 +194,7 @@ class HamiCli:
             successes[SCRIPT_LIST] = True
 
         @sio.on("script:pull:success")
-        @logs_error
+        @handles_error
         def script_detail(msg):
             """
             b:script:pull的回复消息
@@ -225,7 +225,7 @@ class HamiCli:
                     break
 
         @sio.on("installation:list:success")
-        @logs_error
+        @handles_error
         def installation_list(msg):
             """
             b:installation:list的回复消息

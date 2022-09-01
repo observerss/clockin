@@ -37,25 +37,38 @@ def update_user(
         session.commit()
 
 
-def add_plan(username: str, robotname: str, scriptname: str):
+def add_plan(
+    username: str = "", robotname: str = "", scriptname: str = "", userid: str = ""
+):
     user: User
     with Session() as session:
         statement1 = (
             select(User.id, Robot.id, Script.id, Script.configuration)
             .join(User.robots)
             .join(User.scripts)
-            .where(User.username == username)
-            .where(Robot.name == robotname)
-            .where(Script.name == scriptname)
         )
         statement2 = (
             select(User.id, Robot.id, Installation.id, Installation.configuration)
             .join(User.robots)
             .join(User.installations)
-            .where(User.username == username)
-            .where(Robot.name == robotname)
-            .where(Installation.name == scriptname)
         )
+
+        if username:
+            statement1 = statement1.where(User.username == username)
+            statement2 = statement2.where(User.username == username)
+
+        if userid:
+            statement1 = statement1.where(User.id == userid)
+            statement2 = statement2.where(User.id == userid)
+
+        if robotname:
+            statement1 = statement1.where(Robot.name == robotname)
+            statement2 = statement2.where(Robot.name == robotname)
+
+        if scriptname:
+            statement1 = statement1.where(Installation.name == scriptname)
+            statement2 = statement2.where(Installation.name == scriptname)
+
         logger.debug(
             f"statement1: {statement1.compile(engine, compile_kwargs={'literal_binds': True})}"
         )
@@ -63,35 +76,59 @@ def add_plan(username: str, robotname: str, scriptname: str):
             f"statement2: {statement1.compile(engine, compile_kwargs={'literal_binds': True})}"
         )
 
-        values1 = session.execute(statement1).one_or_none()
-        values2 = session.execute(statement2).one_or_none()
+        values1 = session.execute(statement1).first()
+        values2 = session.execute(statement2).first()
         logger.info(f"script values: {values1}")
         logger.info(f"installation values: {values2}")
 
         if values1:
-            plan = Plan(
-                user_id=values1[0],
-                robot_id=values1[1],
-                script_id=values1[2],
-                type=PlanType.script,
+            u, r, s, c, t = (
+                values1[0],
+                values1[1],
+                values1[2],
+                values1[3],
+                PlanType.script,
             )
-            ranges = get_ranges_from_configuration(values1[3])
         elif values2:
-            plan = Plan(
-                user_id=values2[0],
-                robot_id=values2[1],
-                installation_id=values2[2],
-                type=PlanType.installation,
+            u, r, s, c, t = (
+                values2[0],
+                values2[1],
+                values2[2],
+                values1[3],
+                PlanType.installation,
             )
-            ranges = get_ranges_from_configuration(values2[3])
         else:
-            logger.error(f"selection not found: {username}/{robotname}/{scriptname}")
+            logger.error(
+                f"selection not found: {username}/{robotname}/{scriptname}/{userid}"
+            )
             return
 
+        plan = session.execute(
+            select(Plan)
+            .where(Plan.user_id == u)
+            .where(Plan.robot_id == r)
+            .where(Plan.script_id == s)
+            .where(Plan.type == t)
+        ).first()
+
+        if plan:
+            plan = plan[0]
+            logger.info(f"updating plan: {plan.__dict__}")
+
+        if not plan:
+            plan = Plan(
+                user_id=u,
+                robot_id=r,
+                script_id=s,
+                type=t,
+            )
+            session.add(plan)
+            logger.info(f"adding plan: {plan.__dict__}")
+
+        ranges = get_ranges_from_configuration(c)
         if ranges:
             plan.ranges = ranges
 
-        session.add(plan)
         session.commit()
 
 
