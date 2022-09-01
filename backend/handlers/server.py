@@ -64,6 +64,7 @@ def handle_done_clock(req: DoneClockRequest):
 
         if direction == "in" and done:
             clock.clockin = True
+            clock.clokout = False
         elif direction == "out" and done:
             clock.clockout = True
 
